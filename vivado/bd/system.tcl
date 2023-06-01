@@ -141,6 +141,7 @@ xilinx.com:ip:v_tc:6.2\
 xilinx.com:ip:v_tpg:8.0\
 xilinx.com:ip:v_vid_in_axi4s:4.0\
 xilinx.com:ip:xdma:4.1\
+xilinx.com:ip:xlslice:1.0\
 xilinx.com:ip:lmb_bram_if_cntlr:4.0\
 xilinx.com:ip:lmb_v10:3.0\
 xilinx.com:ip:blk_mem_gen:8.4\
@@ -662,6 +663,41 @@ proc create_root_design { parentCell } {
    CONFIG.plltype {QPLL1} \
  ] $xdma_0
 
+  # Create instance: xlconcat_0, and set properties
+  set xlconcat_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 xlconcat_0 ]
+  set_property -dict [ list \
+   CONFIG.IN0_WIDTH {8} \
+   CONFIG.IN1_WIDTH {8} \
+   CONFIG.IN2_WIDTH {8} \
+   CONFIG.NUM_PORTS {3} \
+ ] $xlconcat_0
+
+  # Create instance: xlslice_B, and set properties
+  set xlslice_B [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_B ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {15} \
+   CONFIG.DIN_TO {8} \
+   CONFIG.DIN_WIDTH {24} \
+   CONFIG.DOUT_WIDTH {8} \
+ ] $xlslice_B
+
+  # Create instance: xlslice_G, and set properties
+  set xlslice_G [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_G ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {7} \
+   CONFIG.DIN_WIDTH {24} \
+   CONFIG.DOUT_WIDTH {8} \
+ ] $xlslice_G
+
+  # Create instance: xlslice_R, and set properties
+  set xlslice_R [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_R ]
+  set_property -dict [ list \
+   CONFIG.DIN_FROM {23} \
+   CONFIG.DIN_TO {16} \
+   CONFIG.DIN_WIDTH {24} \
+   CONFIG.DOUT_WIDTH {8} \
+ ] $xlslice_R
+
   # Create interface connections
   connect_bd_intf_net -intf_net CLK_IN_D_0_1 [get_bd_intf_ports pcie_ref_clk] [get_bd_intf_pins util_ds_buf_0/CLK_IN_D]
   connect_bd_intf_net -intf_net axi_gpio_0_GPIO [get_bd_intf_ports gpio] [get_bd_intf_pins axi_gpio_0/GPIO]
@@ -713,9 +749,14 @@ proc create_root_design { parentCell } {
   connect_bd_net -net sys_rst_n_0_1 [get_bd_ports pcie_rst_n] [get_bd_pins xdma_0/sys_rst_n]
   connect_bd_net -net util_ds_buf_0_IBUF_OUT [get_bd_pins util_ds_buf_0/IBUF_OUT] [get_bd_pins xdma_0/sys_clk]
   connect_bd_net -net v_axi4s_vid_out_0_vtg_ce [get_bd_pins v_axi4s_vid_out_0/vtg_ce] [get_bd_pins v_tc_0/gen_clken]
+  connect_bd_net -net v_vid_in_axi4s_0_m_axis_video_tdata [get_bd_pins v_vid_in_axi4s_0/m_axis_video_tdata] [get_bd_pins xlslice_B/Din] [get_bd_pins xlslice_G/Din] [get_bd_pins xlslice_R/Din]
   connect_bd_net -net xdma_0_axi_aclk [get_bd_pins axi_interconnect_0/S01_ACLK] [get_bd_pins xdma_0/axi_aclk]
   connect_bd_net -net xdma_0_axi_aresetn [get_bd_pins axi_interconnect_0/S01_ARESETN] [get_bd_pins xdma_0/axi_aresetn]
+  connect_bd_net -net xlconcat_0_dout [get_bd_pins axi_vdma_0/s_axis_s2mm_tdata] [get_bd_pins xlconcat_0/dout]
   connect_bd_net -net xlconcat_1_dout [get_bd_pins microblaze_0_axi_intc/intr] [get_bd_pins microblaze_0_xlconcat/dout]
+  connect_bd_net -net xlslice_B_Dout [get_bd_pins xlconcat_0/In0] [get_bd_pins xlslice_B/Dout]
+  connect_bd_net -net xlslice_G_Dout [get_bd_pins xlconcat_0/In1] [get_bd_pins xlslice_G/Dout]
+  connect_bd_net -net xlslice_R_Dout [get_bd_pins xlconcat_0/In2] [get_bd_pins xlslice_R/Dout]
 
   # Create address segments
   assign_bd_address -offset 0x80000000 -range 0x40000000 -target_address_space [get_bd_addr_spaces axi_vdma_0/Data_S2MM] [get_bd_addr_segs mig_7series_0/memmap/memaddr] -force
