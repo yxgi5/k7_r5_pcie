@@ -16,8 +16,8 @@
 
 //#define DEVICE_NAME_DEFAULT "/dev/xdma/card0/c2h0"
 #define DEVICE_NAME_DEFAULT "/dev/xdma0_c2h_0"
-#define IMG_RAM_POS     (512*1024*1024)
-//#define IMG_RAM_POS (0x10000000)
+//#define IMG_RAM_POS     (512*1024*1024)
+#define IMG_RAM_POS (0x10000000)
 
 xdma_programe::xdma_programe()
 {
