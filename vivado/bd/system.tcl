@@ -526,7 +526,7 @@ proc create_root_design { parentCell } {
    CONFIG.c_include_mm2s {0} \
    CONFIG.c_mm2s_genlock_mode {0} \
    CONFIG.c_num_fstores {1} \
-   CONFIG.c_s2mm_max_burst_length {32} \
+   CONFIG.c_s2mm_max_burst_length {64} \
  ] $axi_vdma_0
 
   # Create instance: clk_wiz_0, and set properties
