@@ -586,6 +586,7 @@ proc create_root_design { parentCell } {
   set microblaze_0_axi_periph [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 microblaze_0_axi_periph ]
   set_property -dict [ list \
    CONFIG.NUM_MI {8} \
+   CONFIG.NUM_SI {2} \
  ] $microblaze_0_axi_periph
 
   # Create instance: microblaze_0_local_memory
@@ -656,11 +657,29 @@ proc create_root_design { parentCell } {
    CONFIG.PF2_DEVICE_ID_mqdma {9024} \
    CONFIG.PF3_DEVICE_ID_mqdma {9024} \
    CONFIG.axi_data_width {128_bit} \
+   CONFIG.axilite_master_en {true} \
+   CONFIG.axilite_master_scale {Gigabytes} \
+   CONFIG.axilite_master_size {1} \
    CONFIG.axisten_freq {125} \
+   CONFIG.cfg_mgmt_if {false} \
+   CONFIG.mode_selection {Advanced} \
+   CONFIG.pciebar2axibar_axil_master {0x40000000} \
+   CONFIG.pf0_Use_Class_Code_Lookup_Assistant {true} \
+   CONFIG.pf0_base_class_menu {Memory_controller} \
+   CONFIG.pf0_class_code {058000} \
+   CONFIG.pf0_class_code_base {05} \
+   CONFIG.pf0_class_code_interface {00} \
+   CONFIG.pf0_class_code_sub {80} \
    CONFIG.pf0_device_id {7024} \
+   CONFIG.pf0_msix_cap_pba_bir {BAR_1} \
+   CONFIG.pf0_msix_cap_table_bir {BAR_1} \
+   CONFIG.pf0_sub_class_interface_menu {Other_memory_controller} \
    CONFIG.pl_link_cap_max_link_speed {5.0_GT/s} \
    CONFIG.pl_link_cap_max_link_width {X4} \
    CONFIG.plltype {QPLL1} \
+   CONFIG.xdma_pcie_64bit_en {false} \
+   CONFIG.xdma_rnum_chnl {2} \
+   CONFIG.xdma_wnum_chnl {2} \
  ] $xdma_0
 
   # Create instance: xlconcat_0, and set properties
@@ -671,6 +690,12 @@ proc create_root_design { parentCell } {
    CONFIG.IN2_WIDTH {8} \
    CONFIG.NUM_PORTS {3} \
  ] $xlconcat_0
+
+  # Create instance: xlconcat_usr_irq, and set properties
+  set xlconcat_usr_irq [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 xlconcat_usr_irq ]
+  set_property -dict [ list \
+   CONFIG.NUM_PORTS {1} \
+ ] $xlconcat_usr_irq
 
   # Create instance: xlslice_B, and set properties
   set xlslice_B [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:1.0 xlslice_B ]
@@ -725,6 +750,7 @@ proc create_root_design { parentCell } {
   connect_bd_intf_net -intf_net v_tpg_0_m_axis_video [get_bd_intf_pins v_axi4s_vid_out_0/video_in] [get_bd_intf_pins v_tpg_0/m_axis_video]
   connect_bd_intf_net -intf_net v_vid_in_axi4s_0_video_out [get_bd_intf_pins axi_vdma_0/S_AXIS_S2MM] [get_bd_intf_pins v_vid_in_axi4s_0/video_out]
   connect_bd_intf_net -intf_net xdma_0_M_AXI [get_bd_intf_pins axi_interconnect_0/S01_AXI] [get_bd_intf_pins xdma_0/M_AXI]
+  connect_bd_intf_net -intf_net xdma_0_M_AXI_LITE [get_bd_intf_pins microblaze_0_axi_periph/S01_AXI] [get_bd_intf_pins xdma_0/M_AXI_LITE]
   connect_bd_intf_net -intf_net xdma_0_pcie_mgt [get_bd_intf_ports pcie_7x_mgt_rtl_0] [get_bd_intf_pins xdma_0/pcie_mgt]
 
   # Create port connections
@@ -732,6 +758,7 @@ proc create_root_design { parentCell } {
   connect_bd_net -net axi_gpio_0_ip2intc_irpt [get_bd_pins axi_gpio_0/ip2intc_irpt] [get_bd_pins microblaze_0_xlconcat/In2]
   connect_bd_net -net axi_quad_spi_0_ip2intc_irpt [get_bd_pins axi_quad_spi_0/ip2intc_irpt] [get_bd_pins microblaze_0_xlconcat/In0]
   connect_bd_net -net axi_uartlite_0_interrupt [get_bd_pins axi_uartlite_0/interrupt] [get_bd_pins microblaze_0_xlconcat/In1]
+  connect_bd_net -net axi_vdma_0_s2mm_introut [get_bd_pins axi_vdma_0/s2mm_introut] [get_bd_pins xlconcat_usr_irq/In0]
   connect_bd_net -net clk_in1_0_1 [get_bd_ports sys_clk] [get_bd_pins clk_wiz_1/clk_in1]
   connect_bd_net -net clk_wiz_0_clk_out1 [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins v_axi4s_vid_out_0/vid_io_out_clk] [get_bd_pins v_tc_0/clk] [get_bd_pins v_vid_in_axi4s_0/vid_io_in_clk]
   connect_bd_net -net clk_wiz_0_locked [get_bd_pins clk_wiz_0/locked] [get_bd_pins v_tc_0/resetn]
@@ -750,10 +777,11 @@ proc create_root_design { parentCell } {
   connect_bd_net -net util_ds_buf_0_IBUF_OUT [get_bd_pins util_ds_buf_0/IBUF_OUT] [get_bd_pins xdma_0/sys_clk]
   connect_bd_net -net v_axi4s_vid_out_0_vtg_ce [get_bd_pins v_axi4s_vid_out_0/vtg_ce] [get_bd_pins v_tc_0/gen_clken]
   connect_bd_net -net v_vid_in_axi4s_0_m_axis_video_tdata [get_bd_pins v_vid_in_axi4s_0/m_axis_video_tdata] [get_bd_pins xlslice_B/Din] [get_bd_pins xlslice_G/Din] [get_bd_pins xlslice_R/Din]
-  connect_bd_net -net xdma_0_axi_aclk [get_bd_pins axi_interconnect_0/S01_ACLK] [get_bd_pins xdma_0/axi_aclk]
-  connect_bd_net -net xdma_0_axi_aresetn [get_bd_pins axi_interconnect_0/S01_ARESETN] [get_bd_pins xdma_0/axi_aresetn]
+  connect_bd_net -net xdma_0_axi_aclk [get_bd_pins axi_interconnect_0/S01_ACLK] [get_bd_pins microblaze_0_axi_periph/S01_ACLK] [get_bd_pins xdma_0/axi_aclk]
+  connect_bd_net -net xdma_0_axi_aresetn [get_bd_pins axi_interconnect_0/S01_ARESETN] [get_bd_pins microblaze_0_axi_periph/S01_ARESETN] [get_bd_pins xdma_0/axi_aresetn]
   connect_bd_net -net xlconcat_0_dout [get_bd_pins axi_vdma_0/s_axis_s2mm_tdata] [get_bd_pins xlconcat_0/dout]
   connect_bd_net -net xlconcat_1_dout [get_bd_pins microblaze_0_axi_intc/intr] [get_bd_pins microblaze_0_xlconcat/dout]
+  connect_bd_net -net xlconcat_1_dout1 [get_bd_pins xdma_0/usr_irq_req] [get_bd_pins xlconcat_usr_irq/dout]
   connect_bd_net -net xlslice_B_Dout [get_bd_pins xlconcat_0/In0] [get_bd_pins xlslice_B/Dout]
   connect_bd_net -net xlslice_G_Dout [get_bd_pins xlconcat_0/In1] [get_bd_pins xlslice_G/Dout]
   connect_bd_net -net xlslice_R_Dout [get_bd_pins xlconcat_0/In2] [get_bd_pins xlslice_R/Dout]
@@ -771,7 +799,15 @@ proc create_root_design { parentCell } {
   assign_bd_address -offset 0x80000000 -range 0x40000000 -target_address_space [get_bd_addr_spaces microblaze_0/Data] [get_bd_addr_segs mig_7series_0/memmap/memaddr] -force
   assign_bd_address -offset 0x44A10000 -range 0x00010000 -target_address_space [get_bd_addr_spaces microblaze_0/Data] [get_bd_addr_segs v_tc_0/ctrl/Reg] -force
   assign_bd_address -offset 0x44A20000 -range 0x00010000 -target_address_space [get_bd_addr_spaces microblaze_0/Data] [get_bd_addr_segs v_tpg_0/s_axi_CTRL/Reg] -force
+  assign_bd_address -offset 0x40000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_LITE] [get_bd_addr_segs axi_gpio_0/S_AXI/Reg] -force
+  assign_bd_address -offset 0x44A00000 -range 0x00010000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_LITE] [get_bd_addr_segs axi_quad_spi_0/AXI_LITE/Reg] -force
+  assign_bd_address -offset 0x40600000 -range 0x00010000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_LITE] [get_bd_addr_segs axi_uartlite_0/S_AXI/Reg] -force
+  assign_bd_address -offset 0x44A30000 -range 0x00010000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_LITE] [get_bd_addr_segs axi_vdma_0/S_AXI_LITE/Reg] -force
+  assign_bd_address -offset 0x44A40000 -range 0x00010000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_LITE] [get_bd_addr_segs clk_wiz_0/s_axi_lite/Reg] -force
+  assign_bd_address -offset 0x41200000 -range 0x00010000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_LITE] [get_bd_addr_segs microblaze_0_axi_intc/S_AXI/Reg] -force
   assign_bd_address -offset 0x00000000 -range 0x40000000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI] [get_bd_addr_segs mig_7series_0/memmap/memaddr] -force
+  assign_bd_address -offset 0x44A10000 -range 0x00010000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_LITE] [get_bd_addr_segs v_tc_0/ctrl/Reg] -force
+  assign_bd_address -offset 0x44A20000 -range 0x00010000 -target_address_space [get_bd_addr_spaces xdma_0/M_AXI_LITE] [get_bd_addr_segs v_tpg_0/s_axi_CTRL/Reg] -force
 
 
   # Restore current instance
