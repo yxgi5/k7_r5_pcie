@@ -18,6 +18,8 @@
 #define DEVICE_NAME_DEFAULT "/dev/xdma0_c2h_0"
 //#define IMG_RAM_POS     (512*1024*1024)
 //#define IMG_RAM_POS (0x10000000)
+#define FPGA_DDR_START_ADDR (0x80000000)
+#define VIDEO_DDR_FRAME0_POS (0x10000000)
 
 xdma_programe::xdma_programe()
 {
@@ -148,5 +150,39 @@ uint32_t xdma_programe::set_vdma_park_ptr()
     }
 
     return current_ptr;
+}
+
+void xdma_programe::stop_s2mm_vdma(void *base_addr)
+{
+    uint32_t ret;
+
+    ret = read_control(base_addr,S2MM_VDMA_BASE+VDMA_S2MM_CR);
+    write_control(base_addr,S2MM_VDMA_BASE+VDMA_S2MM_CR,ret&~(0x00000001));
+    write_control(base_addr,S2MM_VDMA_BASE+VDMA_S2MM_CR,0x4);
+//    write_control(base_addr,MM2S_VDMA_BASE+VDMA_MM2S_CR,0x4);
+    usleep(100000);
+}
+
+void xdma_programe::reset_s2mm_vdma(void *base_addr)
+{
+    write_control(base_addr,S2MM_VDMA_BASE+VDMA_S2MM_CR,0x4);
+//    write_control(base_addr,MM2S_VDMA_BASE+VDMA_MM2S_CR,0x4);
+}
+
+void xdma_programe::config_s2mm_vdma(void *base_addr,int num_frame)
+{
+    int i;
+    write_control(base_addr,S2MM_VDMA_BASE+VDMA_S2MM_CR,0x4);
+    usleep(100);
+//    write_control(base_addr,S2MM_VDMA_BASE+VDMA_S2MM_CR,0x01011003);
+    write_control(base_addr,S2MM_VDMA_BASE+VDMA_S2MM_CR,0x01011089);
+//    write_control(base_addr,S2MM_VDMA_BASE+VDMA_S2MM_CR,0x0101108B);
+    write_control(base_addr,S2MM_VDMA_BASE+VDMA_S2MM_HSIZE,1920*3);
+    write_control(base_addr,S2MM_VDMA_BASE+VDMA_S2MM_STRID,1920*3);
+    //write_control(base_addr,S2MM_VDMA_BASE+VDMA_S2MM_VSIZE,video_height);
+    for(i=0;i<num_frame;i++)
+        write_control(base_addr,S2MM_VDMA_BASE+VDMA_S2MM_ADDR1+i*0x4, FPGA_DDR_START_ADDR+VIDEO_DDR_FRAME0_POS+i*0x2000000);
+    write_control(base_addr,S2MM_VDMA_BASE+VDMA_S2MM_SR,0xffffffff);
+    write_control(base_addr,S2MM_VDMA_BASE+VDMA_S2MM_VSIZE,1080);
 }
 

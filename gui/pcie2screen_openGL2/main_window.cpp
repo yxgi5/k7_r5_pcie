@@ -99,10 +99,16 @@ void MainWindow::changeWindows(int index)
         if(isFullScreen())
         {
             showNormal();
+            QCursor cursor(Qt::ArrowCursor);
+            QApplication::setOverrideCursor(cursor);
+            QApplication::changeOverrideCursor(cursor);
         }
         else
         {
             showFullScreen();
+            QCursor cursor(Qt::BlankCursor);
+            QApplication::setOverrideCursor(cursor);
+            QApplication::changeOverrideCursor(cursor);
         }
         isPressed = false;
         isRelease = false;

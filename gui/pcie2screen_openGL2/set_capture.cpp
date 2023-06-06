@@ -40,4 +40,8 @@ void xdma_getImg::run()
 void xdma_getImg::setstart(bool isRuning)
 {
     stateWorking = isRuning;
+    if(stateWorking)
+        pXdma->config_s2mm_vdma(pXdma->control_base, VIDEO_FRAME_STORE_NUM);
+    else
+        pXdma->reset_s2mm_vdma(pXdma->control_base);
 }

@@ -25,7 +25,7 @@
 #endif
 #define MAP_SIZE (1024*1024*1024UL)
 #define S2MM_VDMA_BASE 0x04A30000
-#define VIDEO_FRAME_STORE_NUM 1
+#define VIDEO_FRAME_STORE_NUM 3
 #define VDMA_S2MM_CR 0x30
 #define VDMA_S2MM_SR 0x34
 #define VDMA_S2MM_ADDR1 0xAC
@@ -52,6 +52,9 @@ public:
     uint32_t read_control(void *base_addr,int offset);
     void write_control(void *base_addr,int offset,uint32_t val);
     uint32_t set_vdma_park_ptr();
+    void stop_s2mm_vdma(void *base_addr);
+    void reset_s2mm_vdma(void *base_addr);
+    void config_s2mm_vdma(void *base_addr,int num_frame);
     int c2h_event_fd;
     int control_fd;
     void *control_base;
